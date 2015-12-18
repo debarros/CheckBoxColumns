@@ -2,6 +2,11 @@ library(shiny)
 
 shinyServer(function(input, output) {
   
+  #it may be better to set the column width, or to set it to auto
+  # http://www.w3schools.com/css/css3_multiple_columns.asp
+  # http://www.w3schools.com/cssref/css3_pr_column-width.asp
+  # http://codepen.io/cimmanon/pen/CcGlE
+  
   tweaks = reactive ({
     list(tags$head(tags$style(HTML(paste0(
       ".multicol {-webkit-column-count: ",input$numberOfColumns,"; /* Chrome, Safari, Opera */ 
@@ -11,6 +16,9 @@ shinyServer(function(input, output) {
                   -column-fill: auto;}"
     )))))
   })
+  
+  
+  output$tweak2 = renderUI(tagList(tweaks()))
   
   all_rows = reactive({
     if(is.null(input$numberOfCheckboxes)){return(1:25)
@@ -47,31 +55,19 @@ shinyServer(function(input, output) {
       tagList(boxes())
     )) })
   
-  ColCountPersist = reactive({
-    if(is.null(input$numberOfColumns)){return(2)
-    }else return(input$numberOfColumns)
-  })
+
+  output$boxcount = renderUI({
+    print("boxcount")
+    numericInput(inputId = "numberOfCheckboxes",label = "How many boxes?",value = 25)})
+  output$colcount = renderUI({
+    print(paste0("colcount"))
+    return(numericInput(inputId = "numberOfColumns",label = "How many columns?",value = 2))
+    })
   
-  BoxCountPersist = reactive({
-    if(is.null(input$numberOfCheckboxes)){return(25)
-    }else return(input$numberOfCheckboxes)
-  })
-  
-  output$boxcount = renderUI({numericInput(inputId = "numberOfCheckboxes",label = "How many boxes?",value = BoxCountPersist())})
-  output$colcount = renderUI({numericInput(inputId = "numberOfColumns",label = "How many columns?",value = ColCountPersist())})
-  
-  output$topbar = renderUI({tagList( 
-    fluidRow(
+  output$topbar = renderUI({
+    print("topbar")
+    tagList(fluidRow(
       column(width = 6, isolate(uiOutput("boxcount"))),
       column(width = 6, isolate(uiOutput("colcount"))) )) 
   }) 
-  
-  output$wholepage = renderUI({
-    fluidPage(
-      tweaks(),
-      uiOutput("topbar"),
-      fluidRow(
-        column(width = 4, uiOutput("controls")),
-        column(width = 8, plotOutput("plot"))))
-  })
 })
