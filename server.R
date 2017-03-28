@@ -8,13 +8,13 @@ shinyServer(function(input, output) {
   # http://codepen.io/cimmanon/pen/CcGlE
   
   tweaks = reactive ({
-    list(tags$head(tags$style(HTML(paste0(
-      ".multicol {-webkit-column-count: ",input$numberOfColumns,"; /* Chrome, Safari, Opera */ 
-                  -moz-column-count: ",input$numberOfColumns,";    /* Firefox */ 
-                  column-count: ",input$numberOfColumns,"; 
-                  -moz-column-fill: auto;
-                  -column-fill: auto;}"
-    )))))
+    x = paste0(".multicol { -moz-column-fill: auto; -column-fill: auto;",
+      "-webkit-column-count: ",input$numberOfColumns,
+      "; -moz-column-count: ",input$numberOfColumns,
+      "; column-count: ",input$numberOfColumns,";",
+      "position: relative;",
+      "max-height: ", input$HeightOfColumns ,"vh;","}")
+    return(list(tags$head(tags$style(HTML(x)))))
   })
   
   
@@ -22,10 +22,10 @@ shinyServer(function(input, output) {
   
   all_rows = reactive({
     if(is.null(input$numberOfCheckboxes)){return(1:25)
-      } else {
-    x = 1:input$numberOfCheckboxes
-    names(x) = paste("Row",x)
-    return(x)}
+    } else {
+      x = 1:input$numberOfCheckboxes
+      names(x) = paste("Row",x)
+      return(x)}
   })
   
   plot_data <- reactive(input$numSelector)
@@ -39,34 +39,48 @@ shinyServer(function(input, output) {
     ylim = c(1, 50) )
   })
   
-  boxes = reactive({checkboxGroupInput(
+  boxes = reactive({tagList(
+    checkboxGroupInput(
     inputId  = 'numSelector', 
     label    = "Select the numbers:", 
     choices  = all_rows(),
     selected = all_rows(),
-    inline   = FALSE)
+    inline   = F))
   })
   
   output$controls = renderUI({list(
     h3("Multicolumn checkboxGroupInput"), 
     tags$div(
+      style = "position: relative;",
       align = 'left', 
       class = 'multicol', 
       tagList(boxes())
     )) })
   
-
+  
   output$boxcount = renderUI({
     print("boxcount")
     numericInput(inputId = "numberOfCheckboxes",label = "How many boxes?",value = 25)})
   output$colcount = renderUI({
     print(paste0("colcount"))
-    return(numericInput(inputId = "numberOfColumns",label = "How many columns?",value = 2))
+    return(numericInput(inputId = "numberOfColumns",label = "How many columns?",value = 2))})
+  output$HeightOrColumns = renderUI({
+    return(checkboxInput(inputId = "useHeight",label = "Define by Height or #Cols?"))})
+  output$ColumnHeight = renderUI({
+    return(numericInput(inputId = "HeightOfColumns",label = "How tall the columns?",value = 70))})
+  
+  
+  output$controlsPanel = renderUI({
+    return(tagList(column(width = 7, wellPanel(uiOutput("controls")))))
     })
+    
+  
   
   output$topbar = renderUI({
     print("topbar")
     tagList(fluidRow(
+      column(width = 6, isolate(uiOutput("HeightOrColumns"))),
+      column(width = 6, isolate(uiOutput("ColumnHeight"))),
       column(width = 6, isolate(uiOutput("boxcount"))),
       column(width = 6, isolate(uiOutput("colcount"))) )) 
   }) 
